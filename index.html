@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Garifuna Dictionary — Garifuna / Spanish / English</title>
+<style>
+  :root {
+    --ink: #201a12;
+    --muted: #6b6257;
+    --line: #e3dccf;
+    --paper: #ffffff;
+    --wash: #f6f2e9;
+    --gold: #8a5c00;
+    --gold-soft: #fff3cf;
+    --dark: #201a12;
+    --serif: Georgia, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--wash);
+    line-height: 1.5;
+  }
+  .wrap { max-width: 46rem; margin: 0 auto; padding: 0 1rem; }
+  header.top { background: var(--dark); color: #fff; }
+  header.top .wrap { padding-top: 1.25rem; padding-bottom: 1rem; }
+  header.top h1 { margin: 0; font-size: 1.4rem; letter-spacing: 0.01em; }
+  header.top h1 .gf { font-family: var(--serif); font-style: italic; color: #f2c230; }
+  header.top .sub { margin: 0.15rem 0 0; color: #cfc6b4; font-size: 0.95rem; }
+  .verify {
+    background: var(--gold-soft);
+    border-bottom: 2px solid #e0b400;
+    color: #5c3f00;
+    font-size: 0.92rem;
+    padding: 0.55rem 1rem;
+  }
+  .verify strong { font-weight: 700; }
+  nav.tabs { background: var(--dark); }
+  nav.tabs .wrap { display: flex; gap: 0.5rem; padding-bottom: 0.75rem; }
+  nav.tabs button {
+    flex: 1;
+    font: inherit;
+    font-weight: 600;
+    padding: 0.6rem 0.5rem;
+    border-radius: 8px;
+    border: 1px solid #5a5145;
+    background: transparent;
+    color: #e9e2d2;
+    cursor: pointer;
+    min-height: 44px;
+  }
+  nav.tabs button[aria-selected="true"] {
+    background: #f2c230;
+    border-color: #f2c230;
+    color: #201a12;
+  }
+  main .wrap { padding-top: 1rem; padding-bottom: 2rem; }
+  .search-row { display: flex; gap: 0.5rem; }
+  #search {
+    flex: 1;
+    font: inherit;
+    font-size: 1.05rem;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+    min-height: 44px;
+  }
+  .cats {
+    display: flex;
+    gap: 0.45rem;
+    overflow-x: auto;
+    padding: 0.75rem 0;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cats button {
+    flex: 0 0 auto;
+    font: inherit;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    cursor: pointer;
+    min-height: 36px;
+  }
+  .cats button[aria-pressed="true"] {
+    background: var(--dark);
+    border-color: var(--dark);
+    color: #fff;
+  }
+  .meta { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0 0.6rem; }
+  ul.results { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.55rem; }
+  ul.results li button {
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.7rem 0.85rem;
+    cursor: pointer;
+    min-height: 44px;
+  }
+  ul.results li button:active { background: #fbf7ec; }
+  ul.results .gf { font-family: var(--serif); font-size: 1.2rem; display: block; }
+  ul.results .tr { color: var(--muted); font-size: 0.92rem; display: block; margin-top: 0.1rem; }
+  ul.results .cat {
+    display: inline-block;
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gold);
+    background: var(--gold-soft);
+    border-radius: 6px;
+    padding: 0.1rem 0.5rem;
+  }
+  .empty {
+    background: var(--paper);
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    color: var(--muted);
+  }
+  /* Word detail dialog */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(32, 26, 18, 0.55);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+    z-index: 10;
+  }
+  @media (min-width: 40rem) {
+    .overlay { align-items: center; padding: 1rem; }
+  }
+  .card-detail {
+    background: var(--paper);
+    width: 100%;
+    max-width: 32rem;
+    max-height: 88vh;
+    overflow-y: auto;
+    border-radius: 14px 14px 0 0;
+    padding: 1.25rem 1.25rem 1.5rem;
+  }
+  @media (min-width: 40rem) {
+    .card-detail { border-radius: 14px; }
+  }
+  .card-detail .gf-big { font-family: var(--serif); font-size: 1.9rem; margin: 0; }
+  .gf-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+  #listenBtn { display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+  #listenBtn svg { flex: 0 0 auto; }
+  .card-detail dl { margin: 0.9rem 0 0; display: grid; gap: 0.6rem; }
+  .card-detail dt { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .card-detail dd { margin: 0.1rem 0 0; font-size: 1.05rem; }
+  .card-detail .verify-line {
+    margin-top: 1rem;
+    background: var(--gold-soft);
+    border: 1px solid #e0b400;
+    border-radius: 8px;
+    padding: 0.5rem 0.7rem;
+    font-size: 0.87rem;
+    color: #5c3f00;
+  }
+  .card-detail .close-row { display: flex; justify-content: flex-end; margin-bottom: 0.25rem; }
+  /* Quiz */
+  .quiz-setup {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.9rem;
+    display: grid;
+    gap: 0.7rem;
+  }
+  .quiz-setup .row { display: grid; gap: 0.7rem; }
+  @media (min-width: 40rem) {
+    .quiz-setup .row { grid-template-columns: 1fr 1fr 1fr; }
+  }
+  .quiz-setup label { display: grid; gap: 0.25rem; font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+  .quiz-setup select {
+    font: inherit;
+    font-weight: 400;
+    color: var(--ink);
+    padding: 0.55rem 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    min-height: 44px;
+  }
+  .btn {
+    font: inherit;
+    font-weight: 700;
+    padding: 0.65rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--dark);
+    cursor: pointer;
+    min-height: 44px;
+  }
+  .btn.primary { background: var(--dark); color: #fff; }
+  .btn.ghost { background: #fff; color: var(--ink); }
+  .flash {
+    margin-top: 0.9rem;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1.5rem 1.25rem;
+    text-align: center;
+  }
+  .flash .prompt { color: var(--muted); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .flash .front { font-size: 1.6rem; margin: 0.5rem 0 0; }
+  .flash .answer { margin-top: 1rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+  .flash .answer .gf-big { font-family: var(--serif); font-size: 2rem; margin: 0; }
+  .flash .answer .other { color: var(--muted); margin: 0.35rem 0 0; }
+  .flash .answer .ex { font-style: italic; margin: 0.5rem 0 0; }
+  .flash-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+  }
+  .quiz-meta { text-align: center; color: var(--muted); margin: 0.7rem 0 0; font-size: 0.9rem; }
+  footer.site { border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; }
+  footer.site .wrap { padding-top: 0.9rem; padding-bottom: 1.5rem; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1>Garifuna Dictionary <span class="gf">· Garinagu</span></h1>
+    <p class="sub">Garifuna &middot; Spanish &middot; English &mdash; <span id="wordCount">&hellip;</span> words</p>
+  </div>
+  <div class="verify" role="note"><div class="wrap"><strong>Note:</strong> Words pending verification by a fluent speaker.</div></div>
+  <nav class="tabs" aria-label="Views">
+    <div class="wrap">
+      <button id="tabDict" aria-selected="true">Dictionary</button>
+      <button id="tabQuiz" aria-selected="false">Flashcards</button>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <div class="wrap">
+    <section id="viewDict" aria-label="Dictionary">
+      <div class="search-row">
+        <input id="search" type="search" placeholder="Search English, Spanish, or Garifuna&hellip;" aria-label="Search in English, Spanish, or Garifuna" autocomplete="off">
+      </div>
+      <div class="cats" id="catRow" role="group" aria-label="Browse by category"></div>
+      <p class="meta" id="resultMeta"></p>
+      <ul class="results" id="results"></ul>
+    </section>
+
+    <section id="viewQuiz" aria-label="Flashcards" hidden>
+      <div class="quiz-setup">
+        <div class="row">
+          <label>Show me
+            <select id="qFront">
+              <option value="en">English</option>
+              <option value="es">Spanish</option>
+            </select>
+          </label>
+          <label>Category
+            <select id="qCat"></select>
+          </label>
+          <label>Cards
+            <select id="qSize">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+              <option value="all">All</option>
+            </select>
+          </label>
+        </div>
+        <button class="btn primary" id="qStart">Shuffle &amp; start</button>
+      </div>
+
+      <div id="qEmpty" class="empty" style="margin-top: 0.9rem;">
+        Pick a category and deck size, then press Shuffle &amp; start.
+      </div>
+
+      <div id="qPlay" hidden>
+        <div class="flash" id="qCard">
+          <p class="prompt" id="qPrompt">English &rarr; Garifuna</p>
+          <p class="front" id="qFrontText"></p>
+          <div class="answer" id="qBack" hidden>
+            <p class="gf-big" id="qBackGf"></p>
+            <p class="other" id="qBackOther"></p>
+            <p class="ex" id="qBackEx" hidden></p>
+          </div>
+        </div>
+        <div class="flash-nav">
+          <button class="btn ghost" id="qPrev">&larr; Back</button>
+          <button class="btn primary" id="qFlip">Flip</button>
+          <button class="btn ghost" id="qNext">Next &rarr;</button>
+        </div>
+        <p class="quiz-meta" id="qCount"></p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="overlay" id="detail" hidden>
+  <div class="card-detail" role="dialog" aria-modal="true" aria-labelledby="dGf">
+    <div class="close-row"><button class="btn ghost" id="detailClose">Close</button></div>
+    <div class="gf-row">
+      <p class="gf-big" id="dGf"></p>
+      <button class="btn ghost" id="listenBtn" aria-label="Read the Garifuna word aloud"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6v4h3l4 3V3L5 6H2z" fill="currentColor"/><path d="M11.5 5.5c1 1 1 4 0 5M13.5 3.8c1.6 1.6 1.6 6.8 0 8.4" stroke="currentColor" fill="none" stroke-width="1.4" stroke-linecap="round"/></svg>Listen</button>
+    </div>
+    <dl>
+      <div><dt>English</dt><dd id="dEn"></dd></div>
+      <div><dt>Spanish</dt><dd id="dEs"></dd></div>
+      <div><dt>Category</dt><dd id="dCat"></dd></div>
+      <div id="dExWrap"><dt>Example</dt><dd id="dEx"></dd></div>
+    </dl>
+    <p class="verify-line"><strong>Note:</strong> Pending verification by a fluent speaker.</p>
+  </div>
+</div>
+
+<footer class="site">
+  <div class="wrap">
+    <p>Words come from the Garifuna vocabulary spreadsheet &mdash; the only source of truth. To update: re-export the Vocabulary tab as CSV and refresh this app (see README).</p>
+  </div>
+</footer>
+
+<script>
+/*VOCAB-START*/
+const VOCAB = [{"id":"GF1","en":"Good morning","es":"Buenos días","gf":"Buíti binafi","cat":"Greetings","ex":"Buíti binafi, numada."},{"id":"GF2","en":"Good afternoon","es":"Buenas tardes","gf":"Buíti gúyoun","cat":"Greetings","ex":""},{"id":"GF3","en":"Good night","es":"Buenas noches","gf":"Buiti guñon","cat":"Greetings","ex":""},{"id":"GF4","en":"Hello","es":"Hola","gf":"Mabuiga","cat":"Greetings","ex":"Mabuiga, ida biña?"},{"id":"GF5","en":"Goodbye","es":"Adiós","gf":"Ayóu","cat":"Greetings","ex":""},{"id":"GF6","en":"Welcome","es":"Bienvenido","gf":"Buiti achüluruni","cat":"Greetings","ex":""},{"id":"GF7","en":"Thank you","es":"Gracias","gf":"Seremei","cat":"Common Phrases","ex":"Seremei, numada."},{"id":"GF8","en":"Excuse me","es":"Disculpe","gf":"Ferudu","cat":"Common Phrases","ex":""},{"id":"GF9","en":"I don't understand","es":"No entiendo","gf":"Úwati gunfarándaná","cat":"Common Phrases","ex":""},{"id":"GF10","en":"Say it again, please","es":"Repítelo, por favor","gf":"Ariengayabei, fulesi","cat":"Common Phrases","ex":""},{"id":"GF11","en":"Yes","es":"Sí","gf":"Ayi","cat":"Common Phrases","ex":""},{"id":"GF12","en":"No","es":"No","gf":"Ino","cat":"Common Phrases","ex":""},{"id":"GF13","en":"Come here","es":"Ven aquí","gf":"Higabu nu","cat":"Common Phrases","ex":""},{"id":"GF14","en":"What is your name?","es":"¿Cómo te llamas?","gf":"Ka biri?","cat":"Questions","ex":""},{"id":"GF15","en":"How are you?","es":"¿Cómo estás?","gf":"Ida biña?","cat":"Questions","ex":""},{"id":"GF16","en":"Where are you going?","es":"¿A dónde vas?","gf":"Halia badibu?","cat":"Questions","ex":""},{"id":"GF17","en":"Friend","es":"Amigo(a)","gf":"Numada","cat":"People","ex":""},{"id":"GF18","en":"Me","es":"Yo","gf":"Nuguya","cat":"People","ex":""},{"id":"GF19","en":"You","es":"Tú","gf":"Buguya","cat":"People","ex":""},{"id":"GF20","en":"Man","es":"Hombre","gf":"Eyeri","cat":"People","ex":""},{"id":"GF21","en":"Woman","es":"Mujer","gf":"Hiñaru","cat":"People","ex":""},{"id":"GF22","en":"One","es":"Uno","gf":"Aban","cat":"Numbers","ex":""},{"id":"GF23","en":"Two","es":"Dos","gf":"Biama","cat":"Numbers","ex":""},{"id":"GF24","en":"Three","es":"Tres","gf":"Ürüwa","cat":"Numbers","ex":""},{"id":"GF25","en":"Four","es":"Cuatro","gf":"Gádürü","cat":"Numbers","ex":""},{"id":"GF26","en":"Five","es":"Cinco","gf":"Seingü","cat":"Numbers","ex":""},{"id":"GF27","en":"Six","es":"Seis","gf":"Sisi","cat":"Numbers","ex":""},{"id":"GF28","en":"Seven","es":"Siete","gf":"Sedü","cat":"Numbers","ex":""},{"id":"GF29","en":"Eight","es":"Ocho","gf":"Widü","cat":"Numbers","ex":""},{"id":"GF30","en":"Nine","es":"Nueve","gf":"Nefu","cat":"Numbers","ex":""},{"id":"GF31","en":"Ten","es":"Diez","gf":"Dîsi","cat":"Numbers","ex":""},{"id":"GF32","en":"Twenty","es":"Veinte","gf":"Wein","cat":"Numbers","ex":""},{"id":"GF33","en":"Thirty","es":"Treinta","gf":"Darandi","cat":"Numbers","ex":""},{"id":"GF34","en":"One hundred","es":"Cien","gf":"San","cat":"Numbers","ex":""},{"id":"GF35","en":"One thousand","es":"Mil","gf":"Milu","cat":"Numbers","ex":""},{"id":"GF36","en":"Mother","es":"Madre","gf":"Úguchuru","cat":"Family","ex":""},{"id":"GF37","en":"Father","es":"Padre","gf":"Úguchili","cat":"Family","ex":""},{"id":"GF38","en":"Sister","es":"Hermana","gf":"Itu","cat":"Family","ex":""},{"id":"GF39","en":"Brother","es":"Hermano","gf":"Ibiri","cat":"Family","ex":""},{"id":"GF40","en":"Son / Daughter","es":"Hijo / Hija","gf":"Nisanimy","cat":"Family","ex":""},{"id":"GF41","en":"Grandmother","es":"Abuela","gf":"Agütü","cat":"Family","ex":""},{"id":"GF42","en":"Grandfather","es":"Abuelo","gf":"Áruguti","cat":"Family","ex":""},{"id":"GF43","en":"Uncle","es":"Tío","gf":"Iáwüritei","cat":"Family","ex":""},{"id":"GF44","en":"Cousin","es":"Primo(a)","gf":"Iduhei","cat":"Family","ex":""},{"id":"GF45","en":"Spouse","es":"Esposo(a)","gf":"Úmari","cat":"Family","ex":""},{"id":"GF46","en":"Niece","es":"Sobrina","gf":"Ibasei","cat":"Family","ex":""},{"id":"GF47","en":"Nephew","es":"Sobrino","gf":"Ibawanari","cat":"Family","ex":""},{"id":"GF48","en":"Grandchild","es":"Nieto(a)","gf":"Ibari","cat":"Family","ex":""},{"id":"GF49","en":"Head","es":"Cabeza","gf":"Ichügü","cat":"Body","ex":""},{"id":"GF50","en":"Hair","es":"Cabello","gf":"Idiburi","cat":"Body","ex":""},{"id":"GF51","en":"Eye","es":"Ojo","gf":"Agu","cat":"Body","ex":""},{"id":"GF52","en":"Ear","es":"Oreja","gf":"Arigai","cat":"Body","ex":""},{"id":"GF53","en":"Nose","es":"Nariz","gf":"Igiri","cat":"Body","ex":""},{"id":"GF54","en":"Mouth","es":"Boca","gf":"Iuma","cat":"Body","ex":""},{"id":"GF55","en":"Tooth","es":"Diente","gf":"Ari","cat":"Body","ex":""},{"id":"GF56","en":"Hand","es":"Mano","gf":"Uhabu","cat":"Body","ex":""},{"id":"GF57","en":"Arm","es":"Brazo","gf":"Arüna","cat":"Body","ex":""},{"id":"GF58","en":"Heart","es":"Corazón","gf":"Anigi","cat":"Body","ex":""},{"id":"GF59","en":"Water","es":"Agua","gf":"Duna","cat":"Nature","ex":""},{"id":"GF60","en":"Fire","es":"Fuego","gf":"Watu","cat":"Nature","ex":""},{"id":"GF61","en":"Sun","es":"Sol","gf":"Weyu","cat":"Nature","ex":""},{"id":"GF62","en":"Moon","es":"Luna","gf":"Kati","cat":"Nature","ex":""},{"id":"GF63","en":"Rain","es":"Lluvia","gf":"Húya","cat":"Nature","ex":""},{"id":"GF64","en":"Cassava bread","es":"Pan de yuca","gf":"Ereba","cat":"Food & Drink","ex":""},{"id":"GF65","en":"Monday","es":"Lunes","gf":"Leindi","cat":"Days & Time","ex":""},{"id":"GF66","en":"Tuesday","es":"Martes","gf":"Luagu Biama","cat":"Days & Time","ex":""},{"id":"GF67","en":"Wednesday","es":"Miércoles","gf":"Luagua","cat":"Days & Time","ex":""},{"id":"GF68","en":"Thursday","es":"Jueves","gf":"Luagu","cat":"Days & Time","ex":""},{"id":"GF69","en":"Friday","es":"Viernes","gf":"Wándaradi","cat":"Days & Time","ex":""},{"id":"GF70","en":"Saturday","es":"Sábado","gf":"Samudi","cat":"Days & Time","ex":""},{"id":"GF71","en":"Sunday","es":"Domingo","gf":"Dimaasu","cat":"Days & Time","ex":""},{"id":"GF72","en":"To eat","es":"Comer","gf":"Aiga","cat":"Verbs","ex":""},{"id":"GF73","en":"To drink","es":"Beber","gf":"Ata","cat":"Verbs","ex":""},{"id":"GF74","en":"To see","es":"Ver","gf":"Ariha","cat":"Verbs","ex":""},{"id":"GF75","en":"To hear","es":"Oír","gf":"Aganba","cat":"Verbs","ex":""},{"id":"GF76","en":"To sleep","es":"Dormir","gf":"Arumuga","cat":"Verbs","ex":""},{"id":"GF77","en":"To walk","es":"Caminar","gf":"Aibuga","cat":"Verbs","ex":""},{"id":"GF78","en":"To swim","es":"Nadar","gf":"Afuliha","cat":"Verbs","ex":""},{"id":"GF79","en":"To sing","es":"Cantar","gf":"Eremuha","cat":"Verbs","ex":""},{"id":"GF80","en":"To say","es":"Decir","gf":"Erenga","cat":"Verbs","ex":""},{"id":"GF81","en":"To cook","es":"Cocinar","gf":"Abougua","cat":"Verbs","ex":""},{"id":"GF82","en":"To read","es":"Leer","gf":"Alîha","cat":"Verbs","ex":""},{"id":"GF83","en":"To give","es":"Dar","gf":"Ichiga","cat":"Verbs","ex":""},{"id":"GF84","en":"Dog","es":"Perro","gf":"Aunli","cat":"Animals","ex":""},{"id":"GF85","en":"Chicken","es":"Pollo","gf":"Gayu","cat":"Animals","ex":""},{"id":"GF86","en":"Turtle","es":"Tortuga","gf":"Gadaru","cat":"Animals","ex":""},{"id":"GF87","en":"Mosquito","es":"Mosquito","gf":"Marin","cat":"Animals","ex":""},{"id":"GF88","en":"Please","es":"Por favor","gf":"Fulesi","cat":"Common Phrases","ex":""},{"id":"GF89","en":"You're welcome","es":"De nada","gf":"Úwati mégeiti","cat":"Common Phrases","ex":""},{"id":"GF90","en":"My name is ...","es":"Me llamo ...","gf":"… niri bai","cat":"Common Phrases","ex":""},{"id":"GF91","en":"I'm from ...","es":"Soy de ...","gf":"… wa kek","cat":"Common Phrases","ex":""},{"id":"GF92","en":"Where do you live?","es":"¿Dónde vives?","gf":"Halia baganawa?","cat":"Questions","ex":""},{"id":"GF93","en":"What day is today?","es":"¿Qué día es hoy?","gf":"Ka weyu uguñe?","cat":"Questions","ex":""},{"id":"GF94","en":"What time is it?","es":"¿Qué hora es?","gf":"Ka ora?","cat":"Questions","ex":""},{"id":"GF95","en":"Good evening","es":"Buenas noches","gf":"Buíti ranbá weyu","cat":"Greetings","ex":""},{"id":"GF96","en":"Eleven","es":"Once","gf":"Unsu","cat":"Numbers","ex":""},{"id":"GF97","en":"Twelve","es":"Doce","gf":"Dusu","cat":"Numbers","ex":""},{"id":"GF98","en":"Thirteen","es":"Trece","gf":"Tareisi","cat":"Numbers","ex":""},{"id":"GF99","en":"Fourteen","es":"Catorce","gf":"Katorusu","cat":"Numbers","ex":""},{"id":"GF100","en":"Fifteen","es":"Quince","gf":"Keinsi","cat":"Numbers","ex":""},{"id":"GF101","en":"Sixteen","es":"Dieciséis","gf":"Disisi","cat":"Numbers","ex":""},{"id":"GF102","en":"Seventeen","es":"Diecisiete","gf":"Disi sedü","cat":"Numbers","ex":""},{"id":"GF103","en":"Eighteen","es":"Dieciocho","gf":"Disi widü","cat":"Numbers","ex":""},{"id":"GF104","en":"Nineteen","es":"Diecinueve","gf":"Disi nefu","cat":"Numbers","ex":""},{"id":"GF105","en":"Twenty-one","es":"Veintiuno","gf":"Wein Aban","cat":"Numbers","ex":""},{"id":"GF106","en":"Twenty-two","es":"Veintidós","gf":"Wein Biama","cat":"Numbers","ex":""},{"id":"GF107","en":"Twenty-three","es":"Veintitrés","gf":"Wein Ürüwa","cat":"Numbers","ex":""},{"id":"GF108","en":"Twenty-five","es":"Veinticinco","gf":"Wein Seingü","cat":"Numbers","ex":""},{"id":"GF109","en":"Twenty-six","es":"Veintiséis","gf":"Wein Sisi","cat":"Numbers","ex":""},{"id":"GF110","en":"Twenty-seven","es":"Veintisiete","gf":"Wein Sedu","cat":"Numbers","ex":""},{"id":"GF111","en":"Twenty-eight","es":"Veintiocho","gf":"Wein Widü","cat":"Numbers","ex":""},{"id":"GF112","en":"Twenty-nine","es":"Veintinueve","gf":"Wein Nefu","cat":"Numbers","ex":""},{"id":"GF113","en":"Forty","es":"Cuarenta","gf":"Biama Wein","cat":"Numbers","ex":""},{"id":"GF114","en":"Fifty","es":"Cincuenta","gf":"Dimi San","cat":"Numbers","ex":""},{"id":"GF115","en":"Sixty","es":"Sesenta","gf":"Ürüwa Wein","cat":"Numbers","ex":""},{"id":"GF116","en":"Seventy","es":"Setenta","gf":"Ürüwa Wein Disi","cat":"Numbers","ex":""},{"id":"GF117","en":"Eighty","es":"Ochenta","gf":"Gádürü Wein","cat":"Numbers","ex":""},{"id":"GF118","en":"Ninety","es":"Noventa","gf":"Gádürü Wein Disi","cat":"Numbers","ex":""},{"id":"GF119","en":"Belt","es":"Cinturón","gf":"Beliti","cat":"Clothing","ex":""},{"id":"GF120","en":"Shirt","es":"Camisa","gf":"Simisi","cat":"Clothing","ex":""},{"id":"GF121","en":"Gown","es":"Vestido","gf":"Gounu","cat":"Clothing","ex":""},{"id":"GF122","en":"Matches","es":"Fósforos","gf":"Matchi","cat":"Home","ex":""},{"id":"GF123","en":"Flour","es":"Harina","gf":"Fluaru","cat":"Food & Drink","ex":""},{"id":"GF124","en":"Cup","es":"Taza","gf":"Copu","cat":"Home","ex":""},{"id":"GF125","en":"Purse","es":"Bolso","gf":"Posu","cat":"Clothing","ex":""},{"id":"GF126","en":"To think","es":"Pensar","gf":"Aritagua","cat":"Verbs","ex":""},{"id":"GF127","en":"To give","es":"Dar","gf":"Ichiga","cat":"Verbs","ex":""},{"id":"GF128","en":"To smell","es":"Oler","gf":"Irimica","cat":"Verbs","ex":""},{"id":"GF129","en":"To fly","es":"Volar","gf":"Ahamara","cat":"Verbs","ex":""},{"id":"GF130","en":"I (said by men)","es":"Yo (dicho por hombres)","gf":"Au","cat":"People","ex":""},{"id":"GF131","en":"You (said by men)","es":"Tú (dicho por hombres)","gf":"Amuru","cat":"People","ex":""},{"id":"GF132","en":"Come here (said by men)","es":"Ven aquí (dicho por hombres)","gf":"Ahu ye","cat":"Common Phrases","ex":""},{"id":"GF133","en":"Man (said by men)","es":"Hombre (dicho por hombres)","gf":"Wuguri","cat":"People","ex":""},{"id":"GF134","en":"Woman (said by men)","es":"Mujer (dicho por hombres)","gf":"Wuri","cat":"People","ex":""},{"id":"GF135","en":"Path (said by men)","es":"Sendero (dicho por hombres)","gf":"Uma","cat":"Nature","ex":""},{"id":"GF136","en":"Path (said by women)","es":"Sendero (dicho por mujeres)","gf":"Emeri","cat":"Nature","ex":""},{"id":"GF137","en":"Older brother (said by men)","es":"Hermano mayor (dicho por hombres)","gf":"Ibugañaü","cat":"Family","ex":""},{"id":"GF138","en":"Older brother (said by women)","es":"Hermano mayor (dicho por mujeres)","gf":"Ati","cat":"Family","ex":""},{"id":"GF139","en":"First-born child","es":"Primogénito(a)","gf":"Igiramaü","cat":"Family","ex":""},{"id":"GF140","en":"Middle child","es":"Hijo(a) del medio","gf":"Iranaguaü","cat":"Family","ex":""},{"id":"GF141","en":"Last-born child","es":"Hijo(a) menor","gf":"Adarahóuni","cat":"Family","ex":""},{"id":"GF142","en":"Younger sister","es":"Hermana menor","gf":"Amuleluaü","cat":"Family","ex":""},{"id":"GF143","en":"Younger brother","es":"Hermano menor","gf":"Amúleñei","cat":"Family","ex":""},{"id":"GF144","en":"Person","es":"Persona","gf":"Mutu","cat":"People","ex":""},{"id":"GF145","en":"Peanut","es":"Maní","gf":"Pinda","cat":"Food & Drink","ex":""},{"id":"GF146","en":"The Garifuna people","es":"El pueblo garífuna","gf":"Garinagu","cat":"Music & Culture","ex":""},{"id":"GF147","en":"Red","es":"Rojo","gf":"Funati","cat":"Adjectives","ex":""},{"id":"GF148","en":"Blue","es":"Azul","gf":"Dinguti","cat":"Adjectives","ex":""},{"id":"GF149","en":"Yellow","es":"Amarillo","gf":"Dumari","cat":"Adjectives","ex":""},{"id":"GF150","en":"Green","es":"Verde","gf":"Arübana","cat":"Adjectives","ex":""},{"id":"GF151","en":"Black","es":"Negro","gf":"Würiti","cat":"Adjectives","ex":""},{"id":"GF152","en":"White","es":"Blanco","gf":"Haruti","cat":"Adjectives","ex":""},{"id":"GF153","en":"Orange","es":"Anaranjado","gf":"Aransu","cat":"Adjectives","ex":""},{"id":"GF154","en":"Purple","es":"Morado","gf":"Guchu","cat":"Adjectives","ex":""},{"id":"GF155","en":"Brown","es":"Marrón","gf":"Gafe (Buruabeleti)","cat":"Adjectives","ex":""},{"id":"GF156","en":"Pink","es":"Rosado","gf":"Rosouti","cat":"Adjectives","ex":""},{"id":"GF157","en":"Leave me alone!","es":"¡Déjame en paz!","gf":"Igara bana nungua!","cat":"Common Phrases","ex":""},{"id":"GF158","en":"Tuna","es":"Atún","gf":"bunigü","cat":"Animals","ex":""},{"id":"GF159","en":"To be cold","es":"Tener frío","gf":"dili","cat":"Verbs","ex":""},{"id":"GF160","en":"Pond","es":"Estanque","gf":"dunagei","cat":"Nature","ex":""},{"id":"GF161","en":"Stone, rock","es":"Piedra","gf":"dübu","cat":"Nature","ex":""},{"id":"GF162","en":"Coconut","es":"Coco","gf":"faluma","cat":"Food & Drink","ex":""},{"id":"GF163","en":"Canoe","es":"Canoa","gf":"guruyara","cat":"Travel","ex":""},{"id":"GF164","en":"They, them","es":"Ellos","gf":"hagiya","cat":"People","ex":""},{"id":"GF165","en":"Month","es":"Mes","gf":"hati","cat":"Days & Time","ex":""},{"id":"GF166","en":"Fruit","es":"Fruta","gf":"hin","cat":"Food & Drink","ex":""},{"id":"GF167","en":"Blood","es":"Sangre","gf":"hitaü","cat":"Body","ex":""},{"id":"GF168","en":"Life","es":"Vida","gf":"ibagari","cat":"People","ex":""},{"id":"GF169","en":"Child","es":"Niño(a)","gf":"irahü","cat":"Family","ex":""},{"id":"GF170","en":"Soup","es":"Sopa","gf":"ireü","cat":"Food & Drink","ex":""},{"id":"GF171","en":"Name","es":"Nombre","gf":"iri","cat":"People","ex":""},{"id":"GF172","en":"He, him","es":"Él","gf":"ligiya","cat":"People","ex":""},{"id":"GF173","en":"Sand","es":"Arena","gf":"sagoun","cat":"Nature","ex":""},{"id":"GF174","en":"To be sick","es":"Estar enfermo","gf":"sandi","cat":"Verbs","ex":""},{"id":"GF175","en":"Always","es":"Siempre","gf":"suwandan","cat":"Common Phrases","ex":""},{"id":"GF176","en":"To be hot","es":"Hacer calor","gf":"sü","cat":"Verbs","ex":""},{"id":"GF177","en":"She, her","es":"Ella","gf":"tugiya","cat":"People","ex":""},{"id":"GF178","en":"Foot","es":"Pie","gf":"ugudi","cat":"Body","ex":""},{"id":"GF179","en":"Ankle","es":"Tobillo","gf":"umurugutei","cat":"Body","ex":""},{"id":"GF180","en":"Stomach","es":"Estómago","gf":"uragei","cat":"Body","ex":""},{"id":"GF181","en":"Skin","es":"Piel","gf":"ureü","cat":"Body","ex":""},{"id":"GF182","en":"To be well","es":"Estar bien","gf":"uwadigiya","cat":"Verbs","ex":""},{"id":"GF183","en":"We, us","es":"Nosotros","gf":"wagiya","cat":"People","ex":""},{"id":"GF184","en":"Shark","es":"Tiburón","gf":"weibeyuwa","cat":"Animals","ex":""},{"id":"GF185","en":"Horse","es":"Caballo","gf":"xuval","cat":"Animals","ex":""},{"id":"GF186","en":"Meat","es":"Carne","gf":"ügürügü","cat":"Food & Drink","ex":""},{"id":"GF187","en":"Hip","es":"Cadera","gf":"iranagweü","cat":"Body","ex":""},{"id":"GF188","en":"Wasp","es":"Avispa","gf":"hulahüñü","cat":"Animals","ex":""},{"id":"GF189","en":"Sugar","es":"Azúcar","gf":"súgara","cat":"Food & Drink","ex":""},{"id":"GF190","en":"Trip","es":"Viaje","gf":"tripu","cat":"Travel","ex":""},{"id":"GF191","en":"Bridge","es":"Puente","gf":"burichi","cat":"Travel","ex":""},{"id":"GF192","en":"Basket","es":"Canasta","gf":"básigidi","cat":"Home","ex":""},{"id":"GF193","en":"Bucket","es":"Balde","gf":"búngidu","cat":"Home","ex":""},{"id":"GF194","en":"Tool","es":"Herramienta","gf":"tulu","cat":"Home","ex":""},{"id":"GF195","en":"Wristwatch","es":"Reloj","gf":"wachi","cat":"Clothing","ex":""},{"id":"GF196","en":"Cap","es":"Gorra","gf":"kiapu","cat":"Clothing","ex":""},{"id":"GF197","en":"Girl","es":"Muchacha","gf":"giáli","cat":"People","ex":""},{"id":"GF198","en":"Young man","es":"Muchacho","gf":"yomani","cat":"People","ex":""},{"id":"GF199","en":"Nickname","es":"Apodo","gf":"nikinemu","cat":"People","ex":""},{"id":"GF200","en":"Flood","es":"Inundación","gf":"fuludu","cat":"Nature","ex":""},{"id":"GF201","en":"Price","es":"Precio","gf":"ebegi","cat":"Travel","ex":""},{"id":"GF202","en":"Love","es":"Amor","gf":"ínsiñeni","cat":"People","ex":""},{"id":"GF203","en":"Other","es":"Otro(a)","gf":"amu","cat":"Common Phrases","ex":""},{"id":"GF204","en":"OK, all right","es":"Está bien","gf":"oraidi","cat":"Common Phrases","ex":""},{"id":"GF205","en":"Machuca (mashed plantain dish)","es":"Machuca (plátano majado con sopa)","gf":"machuca","cat":"Food & Drink","ex":""},{"id":"GF206","en":"Yankunú (dance)","es":"Yankunú (danza garífuna)","gf":"yankunú","cat":"Music & Culture","ex":""},{"id":"GF207","en":"Walagallo (healing ritual)","es":"Walagallo (rito de sanación)","gf":"walagallo","cat":"Music & Culture","ex":""},{"id":"GF208","en":"Punta (dance and music)","es":"Punta (baile y música)","gf":"Punta","cat":"Music & Culture","ex":""},{"id":"GF209","en":"Primero (lead drum)","es":"Primero (tambor guía)","gf":"Primero","cat":"Music & Culture","ex":""},{"id":"GF210","en":"Segunda (bass drum)","es":"Segunda (tambor bajo)","gf":"Segunda","cat":"Music & Culture","ex":""},{"id":"GF211","en":"Sisira (gourd maracas)","es":"Sisira (maracas de calabaza)","gf":"Sisira","cat":"Music & Culture","ex":""},{"id":"GF212","en":"Paranda (rhythm)","es":"Paranda (ritmo)","gf":"Paranda","cat":"Music & Culture","ex":""},{"id":"GF213","en":"Chumba (rhythm)","es":"Chumba (ritmo)","gf":"Chumba","cat":"Music & Culture","ex":""},{"id":"GF214","en":"Hunguhungu (rhythm)","es":"Hunguhungu (ritmo)","gf":"Hüngühüngü","cat":"Music & Culture","ex":""},{"id":"GF215","en":"Wanaragua (dance)","es":"Wanaragua (danza)","gf":"Wanaragua","cat":"Music & Culture","ex":""},{"id":"GF216","en":"We are coming","es":"Ya venimos","gf":"Awante","cat":"Common Phrases","ex":""},{"id":"GF217","en":"Tradition","es":"Tradición","gf":"Echuni","cat":"Music & Culture","ex":""},{"id":"GF218","en":"Respect","es":"Respeto","gf":"Inebesei","cat":"Music & Culture","ex":""},{"id":"GF219","en":"Pride","es":"Orgullo","gf":"Pantaü","cat":"Music & Culture","ex":""},{"id":"GF220","en":"Congratulations","es":"Felicidades","gf":"Ugundani","cat":"Common Phrases","ex":""},{"id":"GF221","en":"Dugu (ancestral ceremony)","es":"Dugu (ceremonia ancestral)","gf":"Dugu","cat":"Music & Culture","ex":""},{"id":"GF222","en":"Yuremei (the landing)","es":"Yuremei (la llegada)","gf":"Yuremei","cat":"Music & Culture","ex":""},{"id":"GF223","en":"Container","es":"Recipiente","gf":"ageidina","cat":"Home","ex":""},{"id":"GF224","en":"Back","es":"Espalda","gf":"anagani","cat":"Body","ex":""},{"id":"GF225","en":"Earring","es":"Arete","gf":"arigeileü","cat":"Clothing","ex":""},{"id":"GF226","en":"Teacher","es":"Maestro(a)","gf":"arufudahati","cat":"People","ex":""},{"id":"GF227","en":"Sea","es":"Mar","gf":"barana","cat":"Nature","ex":""},{"id":"GF228","en":"Banana","es":"Banano","gf":"bimina","cat":"Food & Drink","ex":""},{"id":"GF229","en":"Person","es":"Persona","gf":"mutu","cat":"People","ex":""},{"id":"GF230","en":"The (masculine)","es":"El","gf":"le","cat":"Common Phrases","ex":""},{"id":"GF231","en":"The (feminine)","es":"La","gf":"to","cat":"Common Phrases","ex":""},{"id":"GF232","en":"To, for","es":"A, para","gf":"un","cat":"Common Phrases","ex":""},{"id":"GF233","en":"On, upon","es":"En, sobre","gf":"uwagu","cat":"Common Phrases","ex":""},{"id":"GF234","en":"Seventy-five","es":"Setenta y cinco","gf":"Ürüwa Wein Keinsi","cat":"Numbers","ex":""},{"id":"GF235","en":"Ninety-five","es":"Noventa y cinco","gf":"Gádürü Wein Keinsi","cat":"Numbers","ex":""},{"id":"GF236","en":"Today","es":"Hoy","gf":"uguñe","cat":"Days & Time","ex":""},{"id":"GF237","en":"Tree","es":"Árbol","gf":"wewe","cat":"Nature","ex":""},{"id":"GF238","en":"Iguana","es":"Iguana","gf":"wayamaga","cat":"Animals","ex":""},{"id":"GF239","en":"Star","es":"Estrella","gf":"waruguma","cat":"Nature","ex":""},{"id":"GF240","en":"Wind","es":"Viento","gf":"bebeidi","cat":"Nature","ex":""},{"id":"GF241","en":"Mountain","es":"Montaña","gf":"wübü","cat":"Nature","ex":""},{"id":"GF242","en":"Road, path","es":"Camino","gf":"üma","cat":"Travel","ex":""},{"id":"GF243","en":"Island","es":"Isla","gf":"ubouhu","cat":"Nature","ex":""},{"id":"GF244","en":"Bird","es":"Pájaro","gf":"dunuru","cat":"Animals","ex":""},{"id":"GF245","en":"White person","es":"Persona blanca","gf":"baranagüle","cat":"People","ex":""},{"id":"GF246","en":"Garden","es":"Jardín","gf":"mainabu","cat":"Home","ex":""},{"id":"GF247","en":"Small bowl","es":"Cuenco pequeño","gf":"guriara","cat":"Home","ex":""},{"id":"GF248","en":"With","es":"Con","gf":"abu","cat":"Common Phrases","ex":""},{"id":"GF249","en":"To plant","es":"Plantar","gf":"ábuna","cat":"Verbs","ex":""},{"id":"GF250","en":"To arrive","es":"Llegar","gf":"achülüra","cat":"Verbs","ex":""},{"id":"GF251","en":"To find","es":"Encontrar","gf":"adeira","cat":"Verbs","ex":""},{"id":"GF252","en":"To work","es":"Trabajar","gf":"adüga","cat":"Verbs","ex":""},{"id":"GF253","en":"To speak","es":"Hablar","gf":"adumureha","cat":"Verbs","ex":""},{"id":"GF254","en":"To lose","es":"Perder","gf":"afeidira","cat":"Verbs","ex":""},{"id":"GF255","en":"To leave","es":"Salir","gf":"áfurida","cat":"Verbs","ex":""},{"id":"GF256","en":"To come","es":"Venir","gf":"áluaha","cat":"Verbs","ex":""},{"id":"GF257","en":"To sell","es":"Vender","gf":"aluguraha","cat":"Verbs","ex":""},{"id":"GF258","en":"If, when","es":"Si, cuando","gf":"anhein","cat":"Common Phrases","ex":""},{"id":"GF259","en":"To have","es":"Tener","gf":"anihein","cat":"Verbs","ex":""},{"id":"GF260","en":"To tell","es":"Contar","gf":"ariñaha","cat":"Verbs","ex":""},{"id":"GF261","en":"To finish","es":"Terminar","gf":"ásura","cat":"Verbs","ex":""},{"id":"GF262","en":"To call","es":"Llamar","gf":"áwaha","cat":"Verbs","ex":""},{"id":"GF263","en":"To enter","es":"Entrar","gf":"ebelura","cat":"Verbs","ex":""},{"id":"GF264","en":"Beans","es":"Frijoles","gf":"eifi","cat":"Food & Drink","ex":""},{"id":"GF265","en":"Chair","es":"Silla","gf":"halaü","cat":"Home","ex":""},{"id":"GF266","en":"Year","es":"Año","gf":"irumu","cat":"Days & Time","ex":""},{"id":"GF267","en":"Because","es":"Porque","gf":"ladüga","cat":"Common Phrases","ex":""},{"id":"GF268","en":"Police officer","es":"Policía","gf":"súdara","cat":"People","ex":""},{"id":"GF269","en":"All","es":"Todo","gf":"sun","cat":"Common Phrases","ex":""},{"id":"GF270","en":"Fish","es":"Pez","gf":"úduraü","cat":"Animals","ex":""},{"id":"GF271","en":"Here, there","es":"Aquí, allí","gf":"ya","cat":"Common Phrases","ex":""},{"id":"GF272","en":"Hudutu (fish stew with mashed plantain)","es":"Hudutu (guiso de pescado con plátano majado)","gf":"hudutu","cat":"Food & Drink","ex":""},{"id":"GF273","en":"Tapou (seafood stew)","es":"Tapado (sopa de mariscos)","gf":"tapou","cat":"Food & Drink","ex":""},{"id":"GF274","en":"Darasa (banana-leaf tamale)","es":"Darasa (tamal de banano en hoja)","gf":"darasa","cat":"Food & Drink","ex":""},{"id":"GF275","en":"Bundiga (banana dumplings)","es":"Bundiga (bolitas de banano)","gf":"bundiga","cat":"Food & Drink","ex":""},{"id":"GF276","en":"To keep","es":"Guardar","gf":"araida","cat":"Verbs","ex":""},{"id":"GF277","en":"Enough","es":"Suficiente","gf":"nófuti","cat":"Common Phrases","ex":""},{"id":"GF278","en":"Healthy","es":"Saludable","gf":"sónuti","cat":"Adjectives","ex":""},{"id":"GF279","en":"Thank you very much","es":"Muchas gracias","gf":"teinki niña bun","cat":"Common Phrases","ex":""},{"id":"GF280","en":"Tomorrow","es":"Mañana","gf":"haruga","cat":"Days & Time","ex":""},{"id":"GF281","en":"We are Garifuna","es":"Somos garífunas","gf":"Garinagu wagiya","cat":"Common Phrases","ex":""},{"id":"GF282","en":"I'm fine (reply)","es":"Bien (respuesta)","gf":"Magadietina","cat":"Common Phrases","ex":""},{"id":"GF283","en":"I am from ...","es":"Soy de ...","gf":"... wa kek","cat":"Common Phrases","ex":""},{"id":"GF284","en":"See you tomorrow","es":"Hasta mañana","gf":"Dai haruga","cat":"Common Phrases","ex":""},{"id":"GF285","en":"I understand","es":"Entiendo","gf":"Gunfarándatina","cat":"Common Phrases","ex":""},{"id":"GF286","en":"Please speak more slowly","es":"Habla más despacio, por favor","gf":"Bayanuha hámuru, fulesi","cat":"Common Phrases","ex":""},{"id":"GF287","en":"Do you speak Garifuna?","es":"¿Hablas garífuna?","gf":"Ariengatibu Garifuna?","cat":"Questions","ex":""},{"id":"GF288","en":"Yes, a little","es":"Sí, un poco","gf":"Ayé, musun","cat":"Common Phrases","ex":""},{"id":"GF289","en":"How do you say ... in Garifuna?","es":"¿Cómo se dice ... en garífuna?","gf":"Ida lian bariengun ... lidan Garifuna?","cat":"Questions","ex":""},{"id":"GF290","en":"Fire!","es":"¡Fuego!","gf":"Watu!","cat":"Common Phrases","ex":""},{"id":"GF291","en":"Merry Christmas","es":"Feliz Navidad","gf":"Buiti fedu","cat":"Greetings","ex":""},{"id":"GF292","en":"Have a good trip","es":"Que le vaya bien","gf":"buidi lámuga lidin bun","cat":"Common Phrases","ex":""},{"id":"GF293","en":"Nice to meet you","es":"Mucho gusto","gf":"gundatina lou nasubudirunibu","cat":"Common Phrases","ex":""},{"id":"GF294","en":"I'm very sorry","es":"Lo siento mucho","gf":"sandínumuti saragu","cat":"Common Phrases","ex":""},{"id":"GF295","en":"How old are you?","es":"¿Cuántos años tienes?","gf":"Átiri irumu bou?","cat":"Questions","ex":""},{"id":"GF296","en":"I am 20 years old","es":"Tengo 20 años","gf":"wein irumu nou","cat":"Common Phrases","ex":""},{"id":"GF297","en":"What are you doing?","es":"¿Qué haces?","gf":"Ka badügübai","cat":"Questions","ex":""},{"id":"GF298","en":"How are you this morning, friend?","es":"¿Cómo estás esta mañana, amigo?","gf":"Ida biña bináfi to, bra","cat":"Greetings","ex":""},{"id":"GF299","en":"I'm great, and you?","es":"En perfectas condiciones, ¿y tú?","gf":"Lidan dan, agia amürü","cat":"Common Phrases","ex":""},{"id":"GF300","en":"All good, nothing new","es":"Todo bien, ninguna novedad","gf":"Sun kataun lidan dan","cat":"Common Phrases","ex":""},{"id":"GF301","en":"Meet my friend","es":"Conozca a este amigo","gf":"Subusibai umádaü le","cat":"Common Phrases","ex":""},{"id":"GF302","en":"Let me introduce my friend","es":"Te presento a este amigo","gf":"Araudanai umádaü le bun","cat":"Common Phrases","ex":""},{"id":"GF303","en":"Likewise","es":"Igualmente","gf":"Au bun kasirügü","cat":"Common Phrases","ex":""},{"id":"GF304","en":"Where are you from, friend?","es":"¿De dónde eres, amigo?","gf":"haliana gia amürü, bra","cat":"Questions","ex":""},{"id":"GF305","en":"I am Honduran, and you?","es":"Soy hondureño, ¿y tú?","gf":"Indúrana au, amürü ti","cat":"Common Phrases","ex":""},{"id":"GF306","en":"I am Belizean","es":"Soy beliceño","gf":"Balísina au","cat":"Common Phrases","ex":""}];
+/*VOCAB-END*/
+
+(function () {
+  "use strict";
+
+  var state = { q: "", cat: "All", deck: [], idx: 0, flipped: false, front: "en" };
+
+  function $(id) { return document.getElementById(id); }
+
+  function norm(s) {
+    return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function esc(s) {
+    return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function categories() {
+    var seen = {}, out = [];
+    for (var i = 0; i < VOCAB.length; i++) {
+      var c = VOCAB[i].cat || "Uncategorized";
+      if (!seen[c]) { seen[c] = true; out.push(c); }
+    }
+    return out;
+  }
+
+  function countByCat(cat) {
+    if (cat === "All") return VOCAB.length;
+    var n = 0;
+    for (var i = 0; i < VOCAB.length; i++) {
+      if ((VOCAB[i].cat || "Uncategorized") === cat) n++;
+    }
+    return n;
+  }
+
+  function filtered() {
+    var q = norm(state.q);
+    var out = [];
+    for (var i = 0; i < VOCAB.length; i++) {
+      var e = VOCAB[i];
+      var cat = e.cat || "Uncategorized";
+      if (state.cat !== "All" && cat !== state.cat) continue;
+      if (q) {
+        var hay = norm(e.en + " " + e.es + " " + e.gf);
+        if (hay.indexOf(q) === -1) continue;
+      }
+      out.push(e);
+    }
+    return out;
+  }
+
+  function renderCats() {
+    var cats = ["All"].concat(categories());
+    var html = "";
+    for (var i = 0; i < cats.length; i++) {
+      var pressed = cats[i] === state.cat ? "true" : "false";
+      html += '<button data-cat="' + esc(cats[i]) + '" aria-pressed="' + pressed + '">' +
+        esc(cats[i]) + " (" + countByCat(cats[i]) + ")</button>";
+    }
+    $("catRow").innerHTML = html;
+  }
+
+  function renderList() {
+    var list = filtered();
+    var meta = list.length === VOCAB.length
+      ? "Showing all " + VOCAB.length + " words"
+      : "Showing " + list.length + " of " + VOCAB.length + " words";
+    $("resultMeta").textContent = meta;
+    if (!list.length) {
+      $("results").innerHTML = '<li class="empty">No words match. Try another spelling or category.</li>';
+      return;
+    }
+    var html = "";
+    for (var i = 0; i < list.length; i++) {
+      var e = list[i];
+      html += '<li><button data-id="' + esc(e.id) + '">' +
+        '<span class="gf">' + esc(e.gf) + "</span>" +
+        '<span class="tr">' + esc(e.en) + " &middot; " + esc(e.es) + "</span>" +
+        '<span class="cat">' + esc(e.cat || "Uncategorized") + "</span>" +
+        "</button></li>";
+    }
+    $("results").innerHTML = html;
+  }
+
+  function findById(id) {
+    for (var i = 0; i < VOCAB.length; i++) {
+      if (VOCAB[i].id === id) return VOCAB[i];
+    }
+    return null;
+  }
+
+  function speechSupported() {
+    return (typeof speechSynthesis !== "undefined") &&
+      (typeof SpeechSynthesisUtterance !== "undefined");
+  }
+
+  function speakGarifuna(text) {
+    if (!speechSupported() || !text) return;
+    try {
+      speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.9;
+      speechSynthesis.speak(u);
+    } catch (err) { /* speech unavailable; stay silent */ }
+  }
+
+  function stopSpeech() {
+    if (!speechSupported()) return;
+    try { speechSynthesis.cancel(); } catch (err) { /* ignore */ }
+  }
+
+  function openDetail(id) {
+    var e = findById(id);
+    if (!e) return;
+    $("listenBtn").hidden = !speechSupported();
+    $("dGf").textContent = e.gf;
+    $("dEn").textContent = e.en;
+    $("dEs").textContent = e.es;
+    $("dCat").textContent = (e.cat || "Uncategorized") + " · " + e.id;
+    if (e.ex) {
+      $("dExWrap").hidden = false;
+      $("dEx").textContent = e.ex;
+    } else {
+      $("dExWrap").hidden = true;
+    }
+    $("detail").hidden = false;
+  }
+
+  function closeDetail() { stopSpeech(); $("detail").hidden = true; }
+
+  function showTab(which) {
+    var dict = which === "dict";
+    $("viewDict").hidden = !dict;
+    $("viewQuiz").hidden = dict;
+    $("tabDict").setAttribute("aria-selected", dict ? "true" : "false");
+    $("tabQuiz").setAttribute("aria-selected", dict ? "false" : "true");
+  }
+
+  /* Quiz */
+  function renderQuizCats() {
+    var cats = ["All"].concat(categories());
+    var html = "";
+    for (var i = 0; i < cats.length; i++) {
+      html += '<option value="' + esc(cats[i]) + '">' + esc(cats[i]) +
+        " (" + countByCat(cats[i]) + ")</option>";
+    }
+    $("qCat").innerHTML = html;
+  }
+
+  function shuffled(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function startQuiz() {
+    var cat = $("qCat").value || "All";
+    var sizeVal = $("qSize").value || "10";
+    state.front = $("qFront").value === "es" ? "es" : "en";
+    var pool = [];
+    for (var i = 0; i < VOCAB.length; i++) {
+      var c = VOCAB[i].cat || "Uncategorized";
+      if (cat === "All" || c === cat) pool.push(VOCAB[i]);
+    }
+    pool = shuffled(pool);
+    if (sizeVal !== "all") {
+      var n = parseInt(sizeVal, 10) || 10;
+      pool = pool.slice(0, n);
+    }
+    state.deck = pool;
+    state.idx = 0;
+    state.flipped = false;
+    if (!pool.length) {
+      $("qEmpty").hidden = false;
+      $("qEmpty").textContent = "No cards in this category yet.";
+      $("qPlay").hidden = true;
+      return;
+    }
+    $("qEmpty").hidden = true;
+    $("qPlay").hidden = false;
+    renderQuizCard();
+  }
+
+  function renderQuizCard() {
+    var e = state.deck[state.idx];
+    if (!e) return;
+    state.flipped = false;
+    $("qPrompt").textContent = (state.front === "es" ? "Spanish" : "English") + " → Garifuna";
+    $("qFrontText").textContent = state.front === "es" ? e.es : e.en;
+    $("qBack").hidden = true;
+    $("qBackGf").textContent = e.gf;
+    $("qBackOther").textContent = state.front === "es" ? e.en : e.es;
+    if (e.ex) {
+      $("qBackEx").hidden = false;
+      $("qBackEx").textContent = e.ex;
+    } else {
+      $("qBackEx").hidden = true;
+    }
+    $("qFlip").textContent = "Flip";
+    $("qCount").textContent = "Card " + (state.idx + 1) + " of " + state.deck.length +
+      " · " + (e.cat || "Uncategorized");
+  }
+
+  function flipQuiz() {
+    if (!state.deck.length) return;
+    state.flipped = !state.flipped;
+    $("qBack").hidden = !state.flipped;
+    $("qFlip").textContent = state.flipped ? "Hide" : "Flip";
+  }
+
+  function stepQuiz(dir) {
+    if (!state.deck.length) return;
+    state.idx = (state.idx + dir + state.deck.length) % state.deck.length;
+    renderQuizCard();
+  }
+
+  function refreshCounts() {
+    $("wordCount").textContent = String(VOCAB.length);
+  }
+
+  /* Optional live CSV: when served over http(s), a swapped-in
+     garifuna-vocabulary.csv in this folder takes precedence over the
+     embedded copy. Opened straight from disk (file://), the embedded
+     copy is used. */
+  function parseCsv(text) {
+    var rows = [], row = [], field = "", inQ = false, i, c;
+    for (i = 0; i < text.length; i++) {
+      c = text[i];
+      if (inQ) {
+        if (c === '"') {
+          if (text[i + 1] === '"') { field += '"'; i++; }
+          else inQ = false;
+        } else field += c;
+      } else {
+        if (c === '"') inQ = true;
+        else if (c === ",") { row.push(field); field = ""; }
+        else if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
+        else if (c !== "\r") field += c;
+      }
+    }
+    if (field !== "" || row.length) { row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  function rowsToEntries(rows) {
+    if (!rows.length) return [];
+    var head = rows[0], out = [];
+    for (var r = 1; r < rows.length; r++) {
+      var o = {};
+      for (var i = 0; i < head.length; i++) o[head[i]] = (rows[r][i] || "").trim();
+      if (!o.English && !o.Spanish && !o.Garifuna) continue;
+      out.push({ id: o.ID, en: o.English, es: o.Spanish, gf: o.Garifuna, cat: o.Category, ex: o.Example });
+    }
+    return out;
+  }
+
+  function tryLoadCsv() {
+    try {
+      if (typeof location === "undefined" || !/^https?:/.test(location.protocol)) return;
+      if (typeof fetch === "undefined") return;
+      fetch("garifuna-vocabulary.csv").then(function (res) {
+        if (!res.ok) return;
+        return res.text();
+      }).then(function (text) {
+        if (!text) return;
+        var entries = rowsToEntries(parseCsv(text));
+        if (!entries.length) return;
+        VOCAB.length = 0;
+        for (var i = 0; i < entries.length; i++) VOCAB.push(entries[i]);
+        refreshCounts();
+        renderCats();
+        renderList();
+        renderQuizCats();
+      }).catch(function () { /* keep embedded copy */ });
+    } catch (err) { /* keep embedded copy */ }
+  }
+
+  function init() {
+    refreshCounts();
+    renderCats();
+    renderList();
+    renderQuizCats();
+
+    $("tabDict").addEventListener("click", function () { showTab("dict"); });
+    $("tabQuiz").addEventListener("click", function () { showTab("quiz"); });
+
+    $("search").addEventListener("input", function (ev) {
+      state.q = ev.target.value || "";
+      renderList();
+    });
+
+    $("catRow").addEventListener("click", function (ev) {
+      var btn = ev.target.closest ? ev.target.closest("[data-cat]") : null;
+      if (!btn) return;
+      state.cat = btn.getAttribute("data-cat");
+      renderCats();
+      renderList();
+    });
+
+    $("results").addEventListener("click", function (ev) {
+      var btn = ev.target.closest ? ev.target.closest("[data-id]") : null;
+      if (!btn) return;
+      openDetail(btn.getAttribute("data-id"));
+    });
+
+    $("listenBtn").addEventListener("click", function () {
+      speakGarifuna($("dGf").textContent);
+    });
+    $("detailClose").addEventListener("click", closeDetail);
+    $("detail").addEventListener("click", function (ev) {
+      if (ev.target === $("detail")) closeDetail();
+    });
+
+    $("qStart").addEventListener("click", startQuiz);
+    $("qFlip").addEventListener("click", flipQuiz);
+    $("qNext").addEventListener("click", function () { stepQuiz(1); });
+    $("qPrev").addEventListener("click", function () { stepQuiz(-1); });
+    $("qCard").addEventListener("click", flipQuiz);
+
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape") { closeDetail(); return; }
+      if ($("viewQuiz").hidden) return;
+      var tag = (ev.target && ev.target.tagName) || "";
+      if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+      if (ev.key === "ArrowRight") stepQuiz(1);
+      else if (ev.key === "ArrowLeft") stepQuiz(-1);
+      else if (ev.key === " " || ev.key === "f" || ev.key === "F") {
+        if (ev.preventDefault) ev.preventDefault();
+        flipQuiz();
+      }
+    });
+
+    tryLoadCsv();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
+
+
